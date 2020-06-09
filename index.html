@@ -11,10 +11,11 @@
 </div>
 <div style="display:inline-block; vertical-align:top;">
     <button class="js-copy-bob-btn">Set clipboard to BOB</button><br /><br />
-    <button class="js-copy-jane-btn">Set clipboard to JANE</button>
+    <button class="js-copy-jane-btn">Set clipboard to JANE</button><br /><br />
+    <button class="js-read-btn">Read and print clipboard content</button>
 </div>
 <div style="display:inline-block;">
-        <textarea class="js-test-textarea" cols="35" rows="4">Try pasting into here to see what you have on your clipboard:
+        <textarea id="js-test-textarea" cols="35" rows="4">Try pasting into here to see what you have on your clipboard:
 
         </textarea>
 </div>
@@ -58,11 +59,43 @@
             console.error('Async: Could not copy text: ', err);
         });
     }
+    function fallbackReadTextFromClipboard(text) {
+        var textArea = document.createElement("textarea");
+        document.body.appendChild(textArea);
+        textArea.contentEditable = true;
+        textArea.focus();
+        textArea.select();
+
+        try {
+            var successful = document.execCommand("paste");
+            var text = textArea.textContent;
+            var msg = successful ? 'successful' : 'unsuccessful';
+            console.log('Fallback: read text command was ' + msg);
+			document.body.removeChild(textArea);
+            return text;
+        } catch (err) {
+            console.error('Fallback: Oops, unable to read', err);
+        }
+        document.body.removeChild(textArea);
+    }
+	
+    function readTextFromClipboard() {
+        if (!navigator.clipboard) {
+            console.log('Fallback: text: ' +fallbackReadTextFromClipboard());
+			return;
+        }
+        navigator.clipboard.readText().then(function(text) {
+            console.log('Async: reading from clipboard was successful! text: '+text);
+        }, function(err) {
+            console.error('Async: Could not read text: ', err);
+        });
+    }
 
     document.querySelector('.js-useragent').value = navigator.userAgent;
 
     var copyBobBtn = document.querySelector('.js-copy-bob-btn'),
-        copyJaneBtn = document.querySelector('.js-copy-jane-btn');
+        copyJaneBtn = document.querySelector('.js-copy-jane-btn'),
+        readBtn = document.querySelector('.js-read-btn');
 
     copyBobBtn.addEventListener('click', function(event) {
         copyTextToClipboard('Bob');
@@ -70,6 +103,10 @@
 
     copyJaneBtn.addEventListener('click', function(event) {
         copyTextToClipboard('Jane');
+    });
+    
+    readBtn.addEventListener('click', function(event) {
+        readTextFromClipboard();
     });
 
     // Displaying console output without opening dev tools.
